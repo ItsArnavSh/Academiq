@@ -1,19 +1,24 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, doc, getDoc } from "firebase/firestore";
-import dotenv from 'dotenv';
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+import dotenv from "dotenv";
 dotenv.config();
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.REACT_APP_FIREBASE_APP_ID,
-    measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
-  };
-  
+  apiKey: "AIzaSyBCxnqCbqrqpBFnj5mgI2oCDKH5jNAqPAI",
+  authDomain: "academiq-b80b4.firebaseapp.com",
+  projectId: "academiq-b80b4",
+  storageBucket: "academiq-b80b4.firebasestorage.app",
+  messagingSenderId: "737817395473",
+  appId: "1:737817395473:web:f5560142fd8b6926b98cb0",
+  measurementId: "G-BDXJMF9T2B",
+};
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
@@ -21,7 +26,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Get all contests
-const getContests = async () => {
+export const getContests = async () => {
   try {
     const contestsRef = collection(db, "contest");
     const snapshot = await getDocs(contestsRef);
@@ -32,15 +37,16 @@ const getContests = async () => {
     });
 
     console.log("Contests:", contests);
+    return contests;
   } catch (error) {
     console.error("Error fetching contests:", error);
   }
 };
 
 // Get questions for a specific contest
-const getContestQuestions = async (contestId) => {
+export const getContestQuestions = async (contestId) => {
   try {
-    if (typeof contestId !== 'string') {
+    if (typeof contestId !== "string") {
       console.error("Invalid contestId:", contestId);
       return;
     }
@@ -59,10 +65,10 @@ const getContestQuestions = async (contestId) => {
 
       for (const questionRef of questionReferences) {
         console.log("Fetching question document:", questionRef.id); // Log the question document reference ID for debugging
-        
+
         // Get the question document data
         const questionDoc = await getDoc(questionRef);
-        
+
         if (questionDoc.exists()) {
           questions.push({ id: questionDoc.id, ...questionDoc.data() });
         } else {
@@ -71,6 +77,7 @@ const getContestQuestions = async (contestId) => {
       }
 
       console.log("Questions for contest:", questions);
+      return questions;
     } else {
       console.log(`No contest found with ID: ${contestId}`);
     }
@@ -80,5 +87,5 @@ const getContestQuestions = async (contestId) => {
 };
 
 // Example usage
-getContests();
+//getContests();
 getContestQuestions("TMTqpSqeeIdYmCg4T6N1"); // Replace with a valid contest ID

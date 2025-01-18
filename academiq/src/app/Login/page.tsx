@@ -1,10 +1,10 @@
-"use client"
+"use client";
 import React from "react";
 import Icon from "./logo";
 import Input from "./input";
 import { TEInput, TERipple } from "tw-elements-react";
 
- function Login() {
+function Login() {
   return (
     <section className="h-screen">
       <div className="h-full">
@@ -21,14 +21,22 @@ import { TEInput, TERipple } from "tw-elements-react";
           {/* <!-- Right column container --> */}
           <div className="w-9 mb-12 md:mb-0 md:w-8/12 lg:w-5/12 xl:w-5/12 pr-40">
             <form>
-
               {/* <!--Sign in section--> */}
               <div className="flex flex-row items-center justify-center lg:justify-start">
-                <p className="mb-0 mr-4 text-lg font-medium	text-4xl">Sign in with</p>
+                <p className="mb-0 mr-4 text-lg font-medium	text-4xl">
+                  Sign in with
+                </p>
 
-                <Icon img = {"https://tse4.mm.bing.net/th?id=OIP.D6P-BO32wCApcPIIjt6p5wHaHa&pid=Api&P=0&h=220"}/>
-                <Icon img = {"https://tse4.mm.bing.net/th?id=OIP.eJqR2-uHIz8cSuE-OWpk-wHaHa&pid=Api&P=0&h=220"}/>
-
+                <Icon
+                  img={
+                    "https://tse4.mm.bing.net/th?id=OIP.D6P-BO32wCApcPIIjt6p5wHaHa&pid=Api&P=0&h=220"
+                  }
+                />
+                <Icon
+                  img={
+                    "https://tse4.mm.bing.net/th?id=OIP.eJqR2-uHIz8cSuE-OWpk-wHaHa&pid=Api&P=0&h=220"
+                  }
+                />
               </div>
 
               {/* <!-- Separator between social media sign in and email/password sign in --> */}
@@ -39,17 +47,9 @@ import { TEInput, TERipple } from "tw-elements-react";
               </div>
 
               {/* <!-- Email and passwordinput --> */}
-              <Input placeholder = "Enter your email"
-              heading = "Email"/>
-              
-              
-              <Input placeholder = "Enter your password"
-              heading = "Password"/>
-              
+              <Input placeholder="Enter your email" heading="Email" />
 
-             
-               
-
+              <Input placeholder="Enter your password" heading="Password" />
 
               {/* <!-- Login button --> */}
               <div className="text-center lg:text-left">
@@ -64,9 +64,9 @@ import { TEInput, TERipple } from "tw-elements-react";
 
                 {/* <!-- Register link --> */}
                 <p className="mb-0 mt-2 pt-1 text-sm font-semibold">
-                  Don't have an account?{" "}
+                  Don`t have an account?{" "}
                   <a
-                    href="#!"
+                    href="/Signup"
                     className="text-danger transition duration-150 ease-in-out hover:text-danger-600 focus:text-danger-600 active:text-danger-700"
                   >
                     Register
@@ -81,5 +81,4 @@ import { TEInput, TERipple } from "tw-elements-react";
   );
 }
 
-  
-  export default Login;
+export default Login;
