@@ -1,10 +1,16 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Icon from "./logo";
-import Input from "./input";
-import { TEInput, TERipple } from "tw-elements-react";
-
+import { auth } from "../firebase/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const signIn = async () => {
+    console.log("Signing Up ", email, password);
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("You are logged in!");
+  };
   return (
     <section className="h-screen">
       <div className="h-full">
@@ -47,20 +53,28 @@ function Login() {
               </div>
 
               {/* <!-- Email and passwordinput --> */}
-              <Input placeholder="Enter your email" heading="Email" />
+              <input
+                className="w-full p-4 border"
+                placeholder="Enter your email"
+                onChange={(e) => setEmail(e.target.value)}
+              />
 
-              <Input placeholder="Enter your password" heading="Password" />
+              <input
+                className="w-full p-4 m-2 border"
+                placeholder="Enter your password"
+                type="password"
+                onChange={(e) => setPassword(e.target.value)}
+              />
 
               {/* <!-- Login button --> */}
               <div className="text-center lg:text-left">
-                <TERipple rippleColor="light">
-                  <button
-                    type="button"
-                    className="inline-block rounded bg-black px-7 pb-2.5 pt-3 text-sm font-medium uppercase leading-normal text-white shadow-[0_4px_9px_-4px_#3b71ca] transition duration-150 ease-in-out hover:bg-primary-600 hover:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.3),0_4px_18px_0_rgba(59,113,202,0.2)] focus:bg-primary-600 focus:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.3),0_4px_18px_0_rgba(59,113,202,0.2)] focus:outline-none focus:ring-0 active:bg-primary-700 active:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.3),0_4px_18px_0_rgba(59,113,202,0.2)] dark:shadow-[0_4px_9px_-4px_rgba(59,113,202,0.5)] dark:hover:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.2),0_4px_18px_0_rgba(59,113,202,0.1)] dark:focus:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.2),0_4px_18px_0_rgba(59,113,202,0.1)] dark:active:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.2),0_4px_18px_0_rgba(59,113,202,0.1)]"
-                  >
-                    Login
-                  </button>
-                </TERipple>
+                <button
+                  type="button"
+                  onClick={signIn}
+                  className="inline-block rounded bg-black px-7 pb-2.5 pt-3 text-sm font-medium uppercase leading-normal text-white shadow-[0_4px_9px_-4px_#3b71ca] transition duration-150 ease-in-out hover:bg-primary-600 hover:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.3),0_4px_18px_0_rgba(59,113,202,0.2)] focus:bg-primary-600 focus:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.3),0_4px_18px_0_rgba(59,113,202,0.2)] focus:outline-none focus:ring-0 active:bg-primary-700 active:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.3),0_4px_18px_0_rgba(59,113,202,0.2)] dark:shadow-[0_4px_9px_-4px_rgba(59,113,202,0.5)] dark:hover:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.2),0_4px_18px_0_rgba(59,113,202,0.1)] dark:focus:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.2),0_4px_18px_0_rgba(59,113,202,0.1)] dark:active:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.2),0_4px_18px_0_rgba(59,113,202,0.1)]"
+                >
+                  Login
+                </button>
 
                 {/* <!-- Register link --> */}
                 <p className="mb-0 mt-2 pt-1 text-sm font-semibold">
