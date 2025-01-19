@@ -121,7 +121,7 @@ export default function ContestPage() {
           <div className="lg:col-span-2 space-y-6">
             <Card title="Answer" className="bg-gray-800 text-white shadow-md">
               <div className="flex justify-between items-center mb-4">
-                <Timer contestId="TMTqpSqeeIdYmCg4T6N1" initialTime={3600} />
+                <Timer contestId="TMTqpSqeeIdYmCg4T6N1" initialTime={data.endTime-data.startTime} />
               </div>
 
               <textarea
