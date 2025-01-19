@@ -9,7 +9,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-blue-600">Academiq</h1>
           <div className="space-x-4">
             <Link
-              href="/contests"
+              href="/Contest"
               className="text-gray-600 hover:text-blue-600"
             >
               Contests

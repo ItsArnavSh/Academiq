@@ -100,12 +100,12 @@ export default function ContestPage() {
           </h2>
           <div className="prose prose-invert">
             <p className="text-gray-100">
-              {questionList[currentQuestionIndex]?.description ||
+              {questionList[currentQuestionIndex]?.questionDesc ||
                 "No description available."}
             </p>
             <h3 className="text-white mt-4">Example:</h3>
             <pre className="bg-black/30 p-4 rounded-lg text-gray-100">
-              {questionList[currentQuestionIndex]?.example ||
+              {questionList[currentQuestionIndex]?.title ||
                 "No example available."}
             </pre>
           </div>
