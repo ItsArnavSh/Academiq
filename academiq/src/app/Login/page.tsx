@@ -50,28 +50,11 @@ function Login() {
             <form onSubmit={signIn}>
               {/* <!--Sign in section--> */}
               <div className="flex flex-row items-center justify-center lg:justify-start">
-                <p className="mb-0 mr-4 text-lg font-medium	text-4xl">
-                  Sign in with
-                </p>
-
-                <Icon
-                  img={
-                    "https://tse4.mm.bing.net/th?id=OIP.D6P-BO32wCApcPIIjt6p5wHaHa&pid=Api&P=0&h=220"
-                  }
-                />
-                <Icon
-                  img={
-                    "https://tse4.mm.bing.net/th?id=OIP.eJqR2-uHIz8cSuE-OWpk-wHaHa&pid=Api&P=0&h=220"
-                  }
-                />
+                <p className="mb-0 mr-4 text-lg font-medium	text-4xl">Sign in</p>
               </div>
 
               {/* <!-- Separator between social media sign in and email/password sign in --> */}
-              <div className="my-4 flex items-center before:mt-0.5 before:flex-1 before:border-t before:border-neutral-300 after:mt-0.5 after:flex-1 after:border-t after:border-neutral-300">
-                <p className="mx-4 mb-0 text-center font-semibold dark:text-black">
-                  Or
-                </p>
-              </div>
+              <div className="my-4 flex items-center before:mt-0.5 before:flex-1 before:border-t before:border-neutral-300 after:mt-0.5 after:flex-1 after:border-t after:border-neutral-300"></div>
 
               {/* <!-- Email and password input --> */}
               <input
