@@ -47,11 +47,11 @@ export default function UserDashboard() {
 
       const scores = [];
       scoreSnapshot.forEach((doc) => {
-        scores.push({ date: doc.id, change: doc.data().value }); // Assuming "change" field exists in the document
+        scores.push({ date: doc.data().createdAt, change: doc.data().value }); // Assuming "change" field exists in the document
       });
 
       // Sort the scores by date if needed (optional)
-
+      scores.sort((a, b) => a.date.localeCompare(b.date)); // Sorting by date
       // Transform into cumulative ratings
       let currentRating = baseRating;
       const ratingData = scores.map((score) => {

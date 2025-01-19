@@ -93,10 +93,14 @@ async function updateScore(email, docId, change) {
         `Updated score in document ${docId} for user with email ${email}`,
       );
     } else {
-      // Document does not exist, create it
-      await setDoc(scoreRef, { value: change });
+      // Document does not exist, create it with the current date and initial value
+      const currentDate = new Date().toISOString(); // Get the current date in ISO format
+      await setDoc(scoreRef, {
+        value: change,
+        createdAt: currentDate, // Store the creation date
+      });
       console.log(
-        `Created document ${docId} with initial value ${change} for user with email ${email}`,
+        `Created document ${docId} with initial value ${change} and date ${currentDate} for user with email ${email}`,
       );
     }
   } catch (error) {
