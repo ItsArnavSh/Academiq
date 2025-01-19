@@ -6,13 +6,14 @@ import Timer from "./timer";
 import Calculator from "./calculator";
 
 export default function ContestPage() {
-  let data = getContestData();
+  const data = getContestData();
+  const [doneList, setDoneList] = useState([]);
+  useEffect(() => {
+    setDoneList(Array(data.questions.length).fill(false));
+  }, [data.questions.length]); // Re-run only if the questions length changes
 
   const [questionList, setQuestionList] = useState(data.questions);
   const [loading, setLoading] = useState(false);
-  const [doneList, setDoneList] = useState(
-    Array(data.questions.length).fill(false),
-  );
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -37,14 +38,15 @@ export default function ContestPage() {
   };
 
   const handleSubmit = () => {
-    const questionId = questionList[currentQuestionIndex]?.id;
-
     if (!answer.trim()) {
       alert("Please provide an answer before submitting!");
       return;
     }
     const isCorrect = questionList[currentQuestionIndex].answer == answer;
     //If is correct
+    if (isCorrect) {
+      doneList[currentQuestionIndex] = true;
+    }
 
     setResultMessage({
       text: isCorrect ? "Correct answer!" : "Wrong answer!",
@@ -150,6 +152,7 @@ export default function ContestPage() {
 
               <button
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors mt-4"
+                disabled={doneList[currentQuestionIndex]}
                 onClick={handleSubmit}
               >
                 Submit Answer
