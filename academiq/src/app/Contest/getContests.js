@@ -25,6 +25,8 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore
 const db = getFirestore(app);
 
+export {db};
+
 // Get all contests
 export const getContests = async () => {
   try {

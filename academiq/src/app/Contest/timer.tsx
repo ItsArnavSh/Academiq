@@ -3,21 +3,45 @@
 import { useState, useEffect } from 'react'
 
 interface TimerProps {
+  contestId: string // Unique ID for the contest
   initialTime: number // in seconds
 }
 
-export default function Timer({ initialTime }: TimerProps) {
-  const [timeLeft, setTimeLeft] = useState(initialTime)
+export default function Timer({ contestId, initialTime }: TimerProps) {
+  const [timeLeft, setTimeLeft] = useState(() => {
+    // Check if there's a saved time in localStorage for this contest
+    const savedTime = localStorage.getItem(`timer-${contestId}`)
+    const savedTimestamp = localStorage.getItem(`timestamp-${contestId}`)
+    
+    if (savedTime && savedTimestamp) {
+      const elapsedTime = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000)
+      const remainingTime = parseInt(savedTime) - elapsedTime
+      return remainingTime > 0 ? remainingTime : 0
+    }
+    return initialTime
+  })
 
   useEffect(() => {
     if (timeLeft <= 0) return
 
+    // Save the remaining time and timestamp to localStorage
+    localStorage.setItem(`timer-${contestId}`, timeLeft.toString())
+    localStorage.setItem(`timestamp-${contestId}`, Date.now().toString())
+
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1)
+      setTimeLeft((prev) => {
+        const newTime = prev - 1
+        if (newTime <= 0) {
+          clearInterval(timer)
+          localStorage.removeItem(`timer-${contestId}`)
+          localStorage.removeItem(`timestamp-${contestId}`)
+        }
+        return newTime
+      })
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [timeLeft])
+  }, [timeLeft, contestId])
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
@@ -35,4 +59,3 @@ export default function Timer({ initialTime }: TimerProps) {
     </div>
   )
 }
-

@@ -1,29 +1,86 @@
-"use client";
-import { getContestQuestions } from "./getContests";
-import { useState, useEffect } from "react";
-import { Card } from "./card";
+'use client';
+import { getContestQuestions } from './getContests';
+import { useState, useEffect } from 'react';
+import { Card } from './card';
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "./getContests";
 
 export default function ContestPage() {
   const [questionList, setQuestionList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answer, setAnswer] = useState("");
-  const [timeLeft, setTimeLeft] = useState(3600); // 1 hour in seconds
+  const [answer, setAnswer] = useState('');
+  const [timeLeft, setTimeLeft] = useState(() => {
+    // Retrieve saved time from localStorage
+    const savedTime = localStorage.getItem('contest-timer');
+    const savedTimestamp = localStorage.getItem('contest-timestamp');
+
+    if (savedTime && savedTimestamp) {
+      const elapsedTime = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+      const remainingTime = parseInt(savedTime) - elapsedTime;
+      return remainingTime > 0 ? remainingTime : 0;
+    }
+
+    // Default time (1 hour in seconds)
+    return 3600;
+  });
+
+  useEffect(() => {
+    const enterFullscreen = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.error("Error attempting to enable full-screen mode:", err);
+        });
+      }
+    };
+  
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        alert("You are not allowed to switch tabs during the contest!");
+        enterFullscreen(); // Re-enter full-screen mode
+      }
+    };
+  
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        alert("You must stay in full-screen mode during the contest!");
+        enterFullscreen(); // Re-enter full-screen mode
+      }
+    };
+  
+    const handleBlur = () => {
+      alert("You cannot switch windows during the contest!");
+      enterFullscreen(); // Re-enter full-screen mode
+    };
+  
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    window.addEventListener("blur", handleBlur);
+  
+    // Enable full-screen on page load
+    enterFullscreen();
+  
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, []);
+  
+  
 
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const questions = await getContestQuestions("TMTqpSqeeIdYmCg4T6N1");
+        const questions = await getContestQuestions('TMTqpSqeeIdYmCg4T6N1');
         setLoading(true);
-        console.log("Fetched questions:", questions); // Debugging log
-
         if (Array.isArray(questions) && questions.length > 0) {
           setQuestionList(questions);
         } else {
-          console.warn("No questions returned or invalid response:", questions);
+          console.warn('No questions returned or invalid response:', questions);
         }
       } catch (error) {
-        console.error("Error fetching questions:", error);
+        console.error('Error fetching questions:', error);
       } finally {
         setLoading(false);
       }
@@ -35,8 +92,20 @@ export default function ContestPage() {
   useEffect(() => {
     if (timeLeft <= 0) return;
 
+    // Save timer state to localStorage
+    localStorage.setItem('contest-timer', timeLeft.toString());
+    localStorage.setItem('contest-timestamp', Date.now().toString());
+
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => {
+        const newTime = prev - 1;
+        if (newTime <= 0) {
+          clearInterval(timer);
+          localStorage.removeItem('contest-timer');
+          localStorage.removeItem('contest-timestamp');
+        }
+        return newTime;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
@@ -47,33 +116,58 @@ export default function ContestPage() {
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
 
-    return `${hours.toString().padStart(2, "0")}:${minutes
+    return `${hours.toString().padStart(2, '0')}:${minutes
       .toString()
-      .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+      .padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const handleNext = () => {
     if (currentQuestionIndex < questionList.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
-      setAnswer(""); // Reset answer field for the new question
+      setAnswer('');
     }
   };
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex((prev) => prev - 1);
-      setAnswer(""); // Reset answer field for the previous question
+      setAnswer('');
     }
   };
 
-  const handleSubmit = () => {
-    console.log(
-      "Submitted answer for question",
-      currentQuestionIndex + 1,
-      ":",
-      answer,
-    );
+ // Ensure you import your Firestore configuration
+  
+  const handleSubmit = async () => {
+    const questionId = questionList[currentQuestionIndex]?.id;
+  
+    if (!questionId || !answer.trim()) {
+      alert("Please provide an answer before submitting!");
+      return;
+    }
+  
+    try {
+      // Fetch the correct answer from Firestore
+      const questionRef = doc(db, "questions", questionId);
+      const questionSnap = await getDoc(questionRef);
+  
+      if (!questionSnap.exists()) {
+        alert("Question not found!");
+        return;
+      }
+  
+      const correctAnswer = questionSnap.data().correctAnswer;
+  
+      if (answer.trim().toLowerCase() === correctAnswer.toLowerCase()) {
+        alert("Correct!");
+      } else {
+        alert("Wrong!");
+      }
+    } catch (error) {
+      console.error("Error checking answer:", error);
+      alert("An error occurred while checking your answer. Please try again.");
+    }
   };
+  
 
   if (loading) {
     return (
@@ -101,12 +195,12 @@ export default function ContestPage() {
           <div className="prose prose-invert">
             <p className="text-gray-100">
               {questionList[currentQuestionIndex]?.questionDesc ||
-                "No description available."}
+                'No description available.'}
             </p>
             <h3 className="text-white mt-4">Example:</h3>
             <pre className="bg-black/30 p-4 rounded-lg text-gray-100">
               {questionList[currentQuestionIndex]?.title ||
-                "No example available."}
+                'No example available.'}
             </pre>
           </div>
         </Card>
