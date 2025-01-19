@@ -32,6 +32,14 @@ async function addStudentToContestSubcollection(
       studentEmail,
     );
 
+    // Check if the document already exists
+    const studentSnap = await getDoc(studentRef);
+
+    if (studentSnap.exists()) {
+      console.log("Student entry already exists. No action taken.");
+      return;
+    }
+
     // Create the student document with an email and an array of scores initialized to 0
     await setDoc(studentRef, {
       email: studentEmail,

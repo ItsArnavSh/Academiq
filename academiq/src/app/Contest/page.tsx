@@ -74,7 +74,18 @@ export default function ContestPage() {
 
     fetchData();
   }, []); // Only runs once on mount to fetch data
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = ""; // This is required for most browsers to show a confirmation dialog.
+    };
 
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
   const handleNext = () => {
     if (currentQuestionIndex < questionList.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
