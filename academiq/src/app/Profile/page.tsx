@@ -44,7 +44,6 @@ export default function UserDashboard() {
               ...doc.data(),
             }));
             setData(userData[0]); // Assuming one user per email
-            console.log(userData[0]);
           } else {
             setError("No user found with the given email.");
           }

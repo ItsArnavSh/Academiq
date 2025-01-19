@@ -1,61 +1,44 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
+import { getContestData } from "./getContests";
 
-interface TimerProps {
-  contestId: string // Unique ID for the contest
-  initialTime: number // in seconds
-}
+export default function Timer() {
+  const [timeLeft, setTimeLeft] = useState("");
 
-export default function Timer({ contestId, initialTime }: TimerProps) {
-  const [timeLeft, setTimeLeft] = useState(() => {
-    // Check if there's a saved time in localStorage for this contest
-    const savedTime = localStorage.getItem(`timer-${contestId}`)
-    const savedTimestamp = localStorage.getItem(`timestamp-${contestId}`)
-    
-    if (savedTime && savedTimestamp) {
-      const elapsedTime = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000)
-      const remainingTime = parseInt(savedTime) - elapsedTime
-      return remainingTime > 0 ? remainingTime : 0
-    }
-    return initialTime
-  })
+  // Extract `endTime` from `getContestData`
+  const { endTime } = getContestData(); // Assuming it has `seconds` and `nanoseconds`
+
+  // Convert `endTime` (seconds + nanoseconds) to a valid Date object
+  const endDate = new Date(
+    endTime.seconds * 1000 + Math.floor(endTime.nanoseconds / 1e6),
+  );
 
   useEffect(() => {
-    if (timeLeft <= 0) return
+    const updateTimer = () => {
+      const now = new Date();
+      const difference = endDate - now; // Difference in milliseconds
 
-    // Save the remaining time and timestamp to localStorage
-    localStorage.setItem(`timer-${contestId}`, timeLeft.toString())
-    localStorage.setItem(`timestamp-${contestId}`, Date.now().toString())
+      if (difference > 0) {
+        const minutes = Math.floor(difference / 1000 / 60); // Minutes left
+        const seconds = Math.floor((difference / 1000) % 60); // Seconds left
+        setTimeLeft(`${minutes}m ${seconds}s`);
+      } else {
+        setTimeLeft("Time's up!");
+        clearInterval(timerInterval); // Stop the interval once the time is up
+      }
+    };
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        const newTime = prev - 1
-        if (newTime <= 0) {
-          clearInterval(timer)
-          localStorage.removeItem(`timer-${contestId}`)
-          localStorage.removeItem(`timestamp-${contestId}`)
-        }
-        return newTime
-      })
-    }, 1000)
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer(); // Run immediately to avoid delay
 
-    return () => clearInterval(timer)
-  }, [timeLeft, contestId])
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const remainingSeconds = seconds % 60
-
-    return `${hours.toString().padStart(2, '0')}:${minutes
-      .toString()
-      .padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
-  }
+    return () => clearInterval(timerInterval); // Cleanup interval on unmount
+  }, [endDate]);
 
   return (
-    <div className="bg-black/30 px-4 py-2 rounded-lg">
-      <span className="font-mono text-white">{formatTime(timeLeft)}</span>
+    <div>
+      <h1>Time Left</h1>
+      <p>{timeLeft}</p>
     </div>
-  )
+  );
 }

@@ -4,17 +4,56 @@ import { useState, useEffect } from "react";
 import { Card } from "./card";
 import Timer from "./timer";
 import Calculator from "./calculator";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase/firebase";
+import Cookies from "js-cookie";
 
+async function updateStudentScore(
+  db,
+  contestId,
+  studentEmail,
+  index,
+  modifier,
+) {
+  try {
+    // Reference to the specific student document
+    const studentRef = doc(db, `Contests/${contestId}/students`, studentEmail);
+
+    // Get the current document data
+    const studentSnap = await getDoc(studentRef);
+
+    if (!studentSnap.exists()) {
+      console.error("Student document not found!");
+      return;
+    }
+
+    // Get the current scores array
+    const studentData = studentSnap.data();
+    const scores = studentData.scores;
+
+    // Update the score at the specified index
+    if (index < 0 || index >= scores.length) {
+      console.error("Invalid index!");
+      return;
+    }
+    scores[index] += modifier;
+
+    // Update the Firestore document with the modified scores array
+    await updateDoc(studentRef, { scores });
+
+    console.log(
+      `Score updated successfully for ${studentEmail} at index ${index}`,
+    );
+  } catch (error) {
+    console.error("Error updating student score:", error);
+  }
+}
 export default function ContestPage() {
-  const data = getContestData();
+  const [data, setData] = useState({ id: String, questions: [] });
+
   const [doneList, setDoneList] = useState([]);
-  useEffect(() => {
-    setDoneList(Array(data.questions.length).fill(false));
-  }, [data.questions.length]); // Re-run only if the questions length changes
-
-  const [questionList, setQuestionList] = useState(data.questions);
+  const [questionList, setQuestionList] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [resultMessage, setResultMessage] = useState<{
@@ -22,6 +61,19 @@ export default function ContestPage() {
     isCorrect: boolean;
     show: boolean;
   } | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const contestData = await getContestData();
+      setData(contestData);
+      setQuestionList(contestData.questions);
+      setDoneList(new Array(contestData.questions.length).fill(false)); // Initialize doneList
+      setLoading(false);
+    };
+
+    fetchData();
+  }, []); // Only runs once on mount to fetch data
 
   const handleNext = () => {
     if (currentQuestionIndex < questionList.length - 1) {
@@ -42,11 +94,27 @@ export default function ContestPage() {
       alert("Please provide an answer before submitting!");
       return;
     }
+
     const isCorrect = questionList[currentQuestionIndex].answer == answer;
-    //If is correct
     if (isCorrect) {
-      doneList[currentQuestionIndex] = true;
+      //Add score in the server
+      const userCookie = Cookies.get("user");
+      const user = JSON.parse(userCookie);
+
+      updateStudentScore(db, data.id, user.email, currentQuestionIndex, 20);
+    } else {
+      //Deduct Score from the server
+      const userCookie = Cookies.get("user");
+      const user = JSON.parse(userCookie);
+      console.log("data: ", data.id, user.email);
+      updateStudentScore(db, data.id, user.email, currentQuestionIndex, -8);
     }
+    // Update doneList correctly using setDoneList
+    setDoneList((prevDoneList) => {
+      const updatedDoneList = [...prevDoneList];
+      if (isCorrect) updatedDoneList[currentQuestionIndex] = true;
+      return updatedDoneList;
+    });
 
     setResultMessage({
       text: isCorrect ? "Correct answer!" : "Wrong answer!",
@@ -121,7 +189,7 @@ export default function ContestPage() {
           <div className="lg:col-span-2 space-y-6">
             <Card title="Answer" className="bg-gray-800 text-white shadow-md">
               <div className="flex justify-between items-center mb-4">
-                <Timer contestId="TMTqpSqeeIdYmCg4T6N1" initialTime={data.endTime-data.startTime} />
+                <Timer />
               </div>
 
               <textarea

@@ -4,8 +4,9 @@ import Cookies from "js-cookie";
 export const getContestData = () => {
   //Get Contest id from cookies
   const pageCookie = Cookies.get("contest");
+
   if (pageCookie) {
     const page = JSON.parse(pageCookie);
-    return page.contest;
+    return page;
   }
 };

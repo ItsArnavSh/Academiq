@@ -60,6 +60,23 @@ export default function ContestDetails() {
   }, [id]);
 
   const handleButtonClick = () => {
+    console.log("Contest: ", contest);
+
+    Cookies.remove("contest"); // Remove any existing cookie named "contest"
+    Cookies.set(
+      "contest",
+      JSON.stringify({
+        id: contest.id,
+        endTime: contest.endTime,
+        questions: contest.questions,
+      }),
+      {
+        expires: 7, // Expires in 7 days
+        path: "", // Optional: Set the path if necessary
+        secure: process.env.NODE_ENV === "production", // Optional: Set secure flag for production
+        sameSite: "Lax", // Optional: Adjust SameSite policy if needed
+      },
+    );
     if (contest) {
       const userCookie = Cookies.get("user");
 
