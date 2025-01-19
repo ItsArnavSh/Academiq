@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Icon from "./logo";
 import { auth } from "../firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { useRouter } from "next/router";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

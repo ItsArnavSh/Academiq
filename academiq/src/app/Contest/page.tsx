@@ -28,31 +28,31 @@ export default function ContestPage() {
   });
 
   useEffect(() => {
-    const enterFullscreen = () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch((err) => {
-          console.error("Error attempting to enable full-screen mode:", err);
-        });
-      }
-    };
+    // const enterFullscreen = () => {
+    //   if (!document.fullscreenElement) {
+    //     document.documentElement.requestFullscreen().catch((err) => {
+    //       console.error("Error attempting to enable full-screen mode:", err);
+    //     });
+    //   }
+    // };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         alert("You are not allowed to switch tabs during the contest!");
-        enterFullscreen(); // Re-enter full-screen mode
+        // enterFullscreen(); // Re-enter full-screen mode
       }
     };
 
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
         alert("You must stay in full-screen mode during the contest!");
-        enterFullscreen(); // Re-enter full-screen mode
+        // enterFullscreen(); // Re-enter full-screen mode
       }
     };
 
     const handleBlur = () => {
       alert("You cannot switch windows during the contest!");
-      enterFullscreen(); // Re-enter full-screen mode
+      // enterFullscreen(); // Re-enter full-screen mode
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -60,7 +60,7 @@ export default function ContestPage() {
     window.addEventListener("blur", handleBlur);
 
     // Enable full-screen on page load
-    enterFullscreen();
+    // enterFullscreen();
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -137,35 +137,16 @@ export default function ContestPage() {
 
   // Ensure you import your Firestore configuration
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const questionId = questionList[currentQuestionIndex]?.id;
 
     if (!questionId || !answer.trim()) {
       alert("Please provide an answer before submitting!");
       return;
     }
-
-    try {
-      // Fetch the correct answer from Firestore
-      const questionRef = doc(db, "questions", questionId);
-      const questionSnap = await getDoc(questionRef);
-
-      if (!questionSnap.exists()) {
-        alert("Question not found!");
-        return;
-      }
-
-      const correctAnswer = questionSnap.data().correctAnswer;
-
-      if (answer.trim().toLowerCase() === correctAnswer.toLowerCase()) {
-        alert("Correct!");
-      } else {
-        alert("Wrong!");
-      }
-    } catch (error) {
-      console.error("Error checking answer:", error);
-      alert("An error occurred while checking your answer. Please try again.");
-    }
+    if (questionList[currentQuestionIndex].answer == answer) {
+      console.log(true);
+    } else console.log(false);
   };
 
   if (loading) {
