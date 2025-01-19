@@ -1,5 +1,5 @@
 "use client";
-
+import Cookies from "js-cookie";
 import {
   LineChart,
   Line,
@@ -9,19 +9,56 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
+import { auth, db } from "../firebase/firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
 
 // Sample rating data
 const ratingData = [
-  { date: "Jul", rating: 1200 },
-  { date: "Aug", rating: 1300 },
-  { date: "Sep", rating: 1450 },
-  { date: "Oct", rating: 1550 },
-  { date: "Nov", rating: 1650 },
-  { date: "Dec", rating: 1600 },
-  { date: "Jan", rating: 1574 },
+  { date: "1", rating: 1200 },
+  { date: "2", rating: 1300 },
+  { date: "3", rating: 1450 },
+  { date: "4", rating: 1550 },
+  { date: "5", rating: 1650 },
+  { date: "6", rating: 1600 },
+  { date: "7", rating: 1000 },
 ];
 
 export default function UserDashboard() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userCookie = Cookies.get("user");
+        if (userCookie) {
+          const user = JSON.parse(userCookie);
+          const usersCollection = collection(db, "users");
+          const q = query(usersCollection, where("email", "==", user.email));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+            setData(userData[0]); // Assuming one user per email
+            console.log(userData[0]);
+          } else {
+            setError("No user found with the given email.");
+          }
+        } else {
+          setError("No user found in cookies.");
+        }
+      } catch (err) {
+        setError("Error fetching user data.");
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center items-start py-8">
       <div className="w-full max-w-6xl px-4">
@@ -41,13 +78,13 @@ export default function UserDashboard() {
                   </div>
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">
-                      Krish Wadhwa
+                      {data ? data.fullName : ""}
                     </h1>
                     <p className="text-gray-600">
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-sm font-medium bg-green-100 text-green-800">
                         ✓
                       </span>
-                      <span className="ml-2">krish_wadhwa24</span>
+                      <span className="ml-2">{data ? data.email : ""}</span>
                     </p>
                   </div>
                 </div>
@@ -80,8 +117,8 @@ export default function UserDashboard() {
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-gray-500">Username:</p>
-                  <p className="font-medium">krish_wadhwa24</p>
+                  <p className="text-sm text-gray-500">Email:</p>
+                  <p className="font-medium">{data ? data.email : ""}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Country:</p>
@@ -97,16 +134,7 @@ export default function UserDashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Student/Professional:</p>
-                  <p className="font-medium">Other</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">CodeChef Pro Plan:</p>
-                  <p className="font-medium flex items-center gap-2">
-                    No Active Plan
-                    <button className="text-blue-600 hover:text-blue-700 text-sm">
-                      View Details
-                    </button>
-                  </p>
+                  <p className="font-medium">{data ? data.fullName : ""}</p>
                 </div>
               </div>
             </div>
@@ -122,7 +150,9 @@ export default function UserDashboard() {
               {/* Current Rating Card */}
               <div className="flex items-start gap-4 mb-6">
                 <div className="bg-green-700 text-white p-4 rounded-lg">
-                  <div className="text-2xl font-bold">1574</div>
+                  <div className="text-2xl font-bold">
+                    {data ? data.rating : ""}
+                  </div>
                   <div className="text-sm opacity-90">Rating</div>
                 </div>
                 <div>
@@ -133,7 +163,10 @@ export default function UserDashboard() {
                     (2025-01-15 22:00:02)
                   </div>
                   <div className="text-sm">
-                    Global Rank: <span className="font-medium">1632</span>
+                    Global Rank:{" "}
+                    <span className="font-medium">
+                      {data ? data.rating : ""}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -179,18 +212,15 @@ export default function UserDashboard() {
 
           {/* Rating Card - Now on the right side */}
           <div className="lg:w-72 bg-white rounded-lg shadow-sm p-6 flex flex-col items-center justify-center">
-            <div className="text-4xl font-bold mb-1">1574</div>
+            <div className="text-4xl font-bold mb-1">
+              {data ? data.rating : ""}
+            </div>
             <div className="text-gray-600 mb-2">(Div 3)</div>
             <div className="flex justify-center gap-1 mb-2">
               <span className="text-green-600 text-2xl">★</span>
               <span className="text-green-600 text-2xl">★</span>
             </div>
-            <a href="#" className="text-blue-600 hover:underline block mb-1">
-              CodeChef Rating
-            </a>
-            <div className="text-sm text-gray-500 mb-4">
-              (Highest Rating 1644)
-            </div>
+
             <div className="grid grid-cols-2 gap-4 border-t pt-4 w-full">
               <div>
                 <a
