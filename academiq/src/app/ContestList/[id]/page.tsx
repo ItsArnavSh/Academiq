@@ -1,72 +1,99 @@
-'use client'
-
-import Cookies from "js-cookie"
-import React from "react"
-import { useParams, useRouter } from "next/navigation"
-import { getContestsdetails } from "../ContestDetails"
+"use client";
+import React from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getContestsdetails } from "../ContestDetails";
+import { doc, collection, setDoc } from "firebase/firestore";
+import { db } from "../../firebase/firebase"; // Adjust this path based on your configuration
+import Cookies from "js-cookie";
 
 interface Contest {
-  id: string
-  name: string
-  startTime: { seconds: number; nanoseconds: number }
-  endTime: { seconds: number; nanoseconds: number }
-  description: string
+  id: string;
+  name: string;
+  startTime: { seconds: number; nanoseconds: number };
+  endTime: { seconds: number; nanoseconds: number };
+  description: string;
   questions: Array<{
-    qname: string
-    description: string
-    image: string
-    solution: string
-  }>
+    qname: string;
+    description: string;
+    image: string;
+    solution: string;
+  }>;
+}
+
+async function addStudentToContestSubcollection(
+  contestid: string,
+  studentEmail: string,
+  questionCount: number,
+) {
+  try {
+    // Reference the subcollection "students" within the specific contest document
+    const studentRef = doc(
+      collection(db, `Contests/${contestid}/students`),
+      studentEmail,
+    );
+
+    // Create the student document with an email and an array of scores initialized to 0
+    await setDoc(studentRef, {
+      email: studentEmail,
+      scores: Array(questionCount).fill(0),
+    });
+
+    console.log("Student added successfully!");
+  } catch (error) {
+    console.error("Error adding student: ", error);
+  }
 }
 
 export default function ContestDetails() {
-  const router = useRouter()
-  const params = useParams()
-  const id = params?.id as string
-  const [contest, setContest] = React.useState<Contest | null>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
+  const router = useRouter(); // Initialize the router
+  const params = useParams();
+  const id = params?.id as string;
+  const [contest, setContest] = React.useState<Contest | null>(null);
 
   React.useEffect(() => {
     const fetchContestDetails = async () => {
-      try {
-        const contests = await getContestsdetails()
-        const selectedContest = contests.find((contest) => contest.id === id)
-        setContest(selectedContest || null)
-      } catch (error) {
-        console.error("Error fetching contest details:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchContestDetails()
-  }, [id])
+      const contests = await getContestsdetails();
+      const selectedContest = contests.find((contest) => contest.id === id);
+      setContest(selectedContest || null);
+    };
+    fetchContestDetails();
+  }, [id]);
 
   const handleButtonClick = () => {
-    Cookies.set("contest", JSON.stringify({ contest: contest }), {
-      expires: 7,
-    })
-    router.push("/Contest")
-  }
+    if (contest) {
+      const userCookie = Cookies.get("user");
 
-  const formatTime = (time: { seconds: number; nanoseconds: number }) => {
-    return new Date(time.seconds * 1000).toLocaleString()
-  }
-
-  if (isLoading) {
-    return <LoadingSkeleton />
-  }
+      const user = JSON.parse(userCookie);
+      console.log(user);
+      const studentEmail = user.email;
+      if (studentEmail) {
+        addStudentToContestSubcollection(
+          contest.id,
+          studentEmail,
+          contest.questions.length,
+        )
+          .then(() => {
+            console.log("Redirecting to /Contest...");
+            router.push("/Contest"); // Redirect to /Contest
+          })
+          .catch((error) => {
+            console.error("Error while adding student: ", error);
+          });
+      }
+    }
+  };
 
   if (!contest) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-50 to-indigo-100">
-        <div className="w-full max-w-6xl bg-white shadow-lg rounded-lg">
-          <div className="p-6">
-            <p className="text-center text-gray-500">Contest not found.</p>
-          </div>
-        </div>
+      <div className="p-8 text-center text-gray-400">
+        Loading contest details...
       </div>
-    )
+    );
   }
+
+  const formatTime = (time: { seconds: number; nanoseconds: number }) => {
+    return new Date(time.seconds * 1000).toLocaleString();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -77,14 +104,23 @@ export default function ContestDetails() {
         <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <section>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Description</h2>
-              <p className="text-gray-600 text-lg leading-relaxed">{contest.description}</p>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                Description
+              </h2>
+              <p className="text-gray-600 text-lg leading-relaxed">
+                {contest.description}
+              </p>
             </section>
             <section>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Questions</h2>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                Questions
+              </h2>
               <div className="space-y-4">
                 {contest.questions.map((question, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-6 shadow-md">
+                  <div
+                    key={index}
+                    className="bg-gray-50 rounded-lg p-6 shadow-md"
+                  >
                     <h3 className="font-medium text-xl text-gray-800 mb-2">
                       Question {index + 1}: {question.qname}
                     </h3>
@@ -95,13 +131,17 @@ export default function ContestDetails() {
           </div>
           <div className="lg:col-span-1 space-y-8">
             <section className="bg-gray-50 rounded-lg p-6 shadow-md">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Contest Time</h2>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                Contest Time
+              </h2>
               <div className="space-y-2">
                 <p className="text-gray-600">
-                  <span className="font-medium">Start:</span> {formatTime(contest.startTime)}
+                  <span className="font-medium">Start:</span>{" "}
+                  {formatTime(contest.startTime)}
                 </p>
                 <p className="text-gray-600">
-                  <span className="font-medium">End:</span> {formatTime(contest.endTime)}
+                  <span className="font-medium">End:</span>{" "}
+                  {formatTime(contest.endTime)}
                 </p>
               </div>
             </section>
@@ -117,7 +157,7 @@ export default function ContestDetails() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function LoadingSkeleton() {
@@ -137,7 +177,10 @@ function LoadingSkeleton() {
             <div className="space-y-4">
               <div className="h-6 w-1/3 bg-gray-200 rounded animate-pulse"></div>
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-gray-50 rounded-lg p-6 shadow-md space-y-2">
+                <div
+                  key={i}
+                  className="bg-gray-50 rounded-lg p-6 shadow-md space-y-2"
+                >
                   <div className="h-5 w-3/4 bg-gray-200 rounded animate-pulse"></div>
                   <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
                 </div>
@@ -155,6 +198,5 @@ function LoadingSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
