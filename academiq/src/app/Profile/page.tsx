@@ -14,20 +14,58 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
 // Sample rating data
-const ratingData = [
-  { date: "1", rating: 1200 },
-  { date: "2", rating: 1300 },
-  { date: "3", rating: 1450 },
-  { date: "4", rating: 1550 },
-  { date: "5", rating: 1650 },
-  { date: "6", rating: 1600 },
-  { date: "7", rating: 1000 },
-];
 
 export default function UserDashboard() {
+  const [ratingData, setRatingData] = useState([]);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  async function fetchAllScoresAsRatingData(email = "", baseRating = 600) {
+    try {
+      console.log("Email is: ", email);
 
+      // Fetch the users collection to find the user document by email
+      const usersCollectionRef = collection(db, "users");
+      const querySnapshot = await getDocs(usersCollectionRef);
+
+      let userId = null;
+
+      // Find the userId by matching email
+      querySnapshot.forEach((doc) => {
+        if (doc.data().email === email) {
+          userId = doc.id;
+        }
+      });
+
+      if (!userId) {
+        console.log("User not found with the provided email.");
+        return [];
+      }
+
+      // Reference the scores subcollection for the found userId
+      const scoresCollectionRef = collection(db, `users/${userId}/scores`);
+      const scoreSnapshot = await getDocs(scoresCollectionRef);
+
+      const scores = [];
+      scoreSnapshot.forEach((doc) => {
+        scores.push({ date: doc.id, change: doc.data().value }); // Assuming "change" field exists in the document
+      });
+
+      // Sort the scores by date if needed (optional)
+
+      // Transform into cumulative ratings
+      let currentRating = baseRating;
+      const ratingData = scores.map((score) => {
+        currentRating += score.change;
+        return { date: score.date, rating: currentRating };
+      });
+
+      console.log(`Rating data for user with email ${email}:`, ratingData);
+      setRatingData(ratingData);
+    } catch (error) {
+      console.error("Error fetching or processing scores: ", error);
+      return [];
+    }
+  }
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -35,6 +73,9 @@ export default function UserDashboard() {
         if (userCookie) {
           const user = JSON.parse(userCookie);
           const usersCollection = collection(db, "users");
+          console.log(user);
+          console.log(user.id);
+          fetchAllScoresAsRatingData(user.email, 600);
           const q = query(usersCollection, where("email", "==", user.email));
           const querySnapshot = await getDocs(q);
 
