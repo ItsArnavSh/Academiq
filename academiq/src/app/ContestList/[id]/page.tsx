@@ -2,7 +2,14 @@
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getContestsdetails } from "../ContestDetails";
-import { doc, collection, setDoc } from "firebase/firestore";
+import {
+  doc,
+  collection,
+  setDoc,
+  getDoc,
+  updateDoc,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../../firebase/firebase"; // Adjust this path based on your configuration
 import Cookies from "js-cookie";
 
@@ -52,6 +59,50 @@ async function addStudentToContestSubcollection(
   }
 }
 
+async function updateScore(email, docId, change) {
+  try {
+    // Fetch the user document using email (assuming the email is stored in the user document)
+    const usersCollectionRef = collection(db, "users");
+    const querySnapshot = await getDocs(usersCollectionRef);
+
+    let userId = null;
+
+    // Find the userId based on the email
+    querySnapshot.forEach((doc) => {
+      if (doc.data().email === email) {
+        userId = doc.id;
+      }
+    });
+
+    if (!userId) {
+      console.log("User not found with the provided email.");
+      return;
+    }
+
+    // Reference the scores subcollection using the found userId
+    const scoreRef = doc(collection(db, `users/${userId}/scores`), docId);
+
+    const scoreDoc = await getDoc(scoreRef);
+
+    if (scoreDoc.exists()) {
+      // Document exists, update the value
+      await updateDoc(scoreRef, {
+        value: scoreDoc.data().value + change,
+      });
+      console.log(
+        `Updated score in document ${docId} for user with email ${email}`,
+      );
+    } else {
+      // Document does not exist, create it
+      await setDoc(scoreRef, { value: change });
+      console.log(
+        `Created document ${docId} with initial value ${change} for user with email ${email}`,
+      );
+    }
+  } catch (error) {
+    console.error("Error updating/creating score document: ", error);
+  }
+}
 export default function ContestDetails() {
   const router = useRouter(); // Initialize the router
   const params = useParams();
@@ -85,10 +136,12 @@ export default function ContestDetails() {
         sameSite: "Lax", // Optional: Adjust SameSite policy if needed
       },
     );
+
     if (contest) {
       const userCookie = Cookies.get("user");
 
       const user = JSON.parse(userCookie);
+      updateScore(user.email, contest.id, 0);
       console.log(user);
       const studentEmail = user.email;
       if (studentEmail) {

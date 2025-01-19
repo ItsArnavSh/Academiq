@@ -4,7 +4,14 @@ import { useState, useEffect } from "react";
 import { Card } from "./card";
 import Timer from "./timer";
 import Calculator from "./calculator";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import Cookies from "js-cookie";
 
@@ -46,6 +53,51 @@ async function updateStudentScore(
     );
   } catch (error) {
     console.error("Error updating student score:", error);
+  }
+}
+
+async function updateScore(email, docId, change) {
+  try {
+    // Fetch the user document using email (assuming the email is stored in the user document)
+    const usersCollectionRef = collection(db, "users");
+    const querySnapshot = await getDocs(usersCollectionRef);
+
+    let userId = null;
+
+    // Find the userId based on the email
+    querySnapshot.forEach((doc) => {
+      if (doc.data().email === email) {
+        userId = doc.id;
+      }
+    });
+
+    if (!userId) {
+      console.log("User not found with the provided email.");
+      return;
+    }
+
+    // Reference the scores subcollection using the found userId
+    const scoreRef = doc(collection(db, `users/${userId}/scores`), docId);
+
+    const scoreDoc = await getDoc(scoreRef);
+
+    if (scoreDoc.exists()) {
+      // Document exists, update the value
+      await updateDoc(scoreRef, {
+        value: scoreDoc.data().value + change,
+      });
+      console.log(
+        `Updated score in document ${docId} for user with email ${email}`,
+      );
+    } else {
+      // Document does not exist, create it
+      await setDoc(scoreRef, { value: change });
+      console.log(
+        `Created document ${docId} with initial value ${change} for user with email ${email}`,
+      );
+    }
+  } catch (error) {
+    console.error("Error updating/creating score document: ", error);
   }
 }
 export default function ContestPage() {
@@ -111,13 +163,14 @@ export default function ContestPage() {
       //Add score in the server
       const userCookie = Cookies.get("user");
       const user = JSON.parse(userCookie);
-
+      updateScore(user.email, data.id, 20);
       updateStudentScore(db, data.id, user.email, currentQuestionIndex, 20);
     } else {
       //Deduct Score from the server
       const userCookie = Cookies.get("user");
       const user = JSON.parse(userCookie);
       console.log("data: ", data.id, user.email);
+      updateScore(user.email, data.id, -8);
       updateStudentScore(db, data.id, user.email, currentQuestionIndex, -8);
     }
     // Update doneList correctly using setDoneList
