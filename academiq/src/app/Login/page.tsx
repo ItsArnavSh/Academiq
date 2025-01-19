@@ -1,4 +1,5 @@
 "use client";
+import Cookies from "js-cookie";
 import React, { useState } from "react";
 import Icon from "./logo";
 import { auth } from "../firebase/firebase";
@@ -10,6 +11,10 @@ function Login() {
   const signIn = async () => {
     console.log("Signing Up ", email, password);
     await signInWithEmailAndPassword(auth, email, password);
+    Cookies.set("user", JSON.stringify({ email: email }), {
+      expires: 7,
+    }); // Expires in 7 days
+
     alert("You are logged in!");
   };
   return (

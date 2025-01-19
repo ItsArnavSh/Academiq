@@ -1,28 +1,57 @@
 "use client";
 import React, { useState } from "react";
-import Icon from "../Login/logo";
-import { auth } from "../firebase/firebase";
+import { auth, db } from "../firebase/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-
+import { doc, setDoc } from "firebase/firestore";
+import Cookies from "js-cookie";
 function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [nationality, setNationality] = useState("");
+  const [profession, setProfession] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const professions = [
+    "Student",
+    "Software Developer",
+    "Data Scientist",
+    "Teacher",
+    "Engineer",
+    "Other",
+  ];
 
   const signUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    if (!email || !password) {
+    if (!email || !password || !fullName || !nationality || !profession) {
       setError("Please fill in all fields");
       setIsLoading(false);
       return;
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      const user = userCredential.user;
+      Cookies.set("user", JSON.stringify({ email: email }), { expires: 7 }); // Expires in 7 days
+
+      // Save additional user data to Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        email: email,
+        fullName: fullName,
+        nationality: nationality,
+        profession: profession,
+        rating: 600,
+        contests_ranks: [],
+      });
+
       alert("Account created successfully!");
       // You can redirect the user or update the UI state here
     } catch (error) {
@@ -54,17 +83,6 @@ function Signup() {
                 <p className="mb-0 mr-4 text-lg font-medium	text-4xl">
                   Sign up with
                 </p>
-
-                <Icon
-                  img={
-                    "https://tse4.mm.bing.net/th?id=OIP.D6P-BO32wCApcPIIjt6p5wHaHa&pid=Api&P=0&h=220"
-                  }
-                />
-                <Icon
-                  img={
-                    "https://tse4.mm.bing.net/th?id=OIP.eJqR2-uHIz8cSuE-OWpk-wHaHa&pid=Api&P=0&h=220"
-                  }
-                />
               </div>
 
               <div className="my-4 flex items-center before:mt-0.5 before:flex-1 before:border-t before:border-neutral-300 after:mt-0.5 after:flex-1 after:border-t after:border-neutral-300">
@@ -92,6 +110,38 @@ function Signup() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+
+              <input
+                className="w-full p-4 border mb-4"
+                placeholder="Enter your full name"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+
+              <input
+                className="w-full p-4 border mb-4"
+                placeholder="Enter your nationality"
+                type="text"
+                value={nationality}
+                onChange={(e) => setNationality(e.target.value)}
+                required
+              />
+
+              <select
+                className="w-full p-4 border mb-4"
+                value={profession}
+                onChange={(e) => setProfession(e.target.value)}
+                required
+              >
+                <option value="">Select your profession</option>
+                {professions.map((prof) => (
+                  <option key={prof} value={prof}>
+                    {prof}
+                  </option>
+                ))}
+              </select>
 
               <div className="text-center lg:text-left">
                 <button
