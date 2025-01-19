@@ -45,4 +45,6 @@ export const getContestsdetails = async () => {
     }
   };
 
+  getContestsdetails();
+
  

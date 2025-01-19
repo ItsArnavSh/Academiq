@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import { getContestsdetails } from "./ContestDetails"
 
 interface Contest {
@@ -9,6 +10,7 @@ interface Contest {
   startTime: { seconds: number; nanoseconds: number }
   endTime: { seconds: number; nanoseconds: number }
   description: string
+  url: string
 }
 
 function categorizeContests(contests: Contest[]) {
@@ -54,12 +56,12 @@ export default function ContestTable() {
 
   const { upcoming, ongoing, past } = useMemo(() => categorizeContests(contests), [contests])
 
-  const renderContestTable = (contests: Contest[]) => (
+  const renderContestTable = (contests: Contest[], isOngoing: boolean = false) => (
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead className="bg-gray-800/50">
           <tr>
-            {['Name', 'Start Time', 'End Time', 'Duration', 'Description'].map((header) => (
+            {['Name', 'Start Time', 'End Time', 'Duration', 'Actions'].map((header) => (
               <th key={header} className="px-4 py-3 text-left text-sm font-medium text-gray-300">
                 {header}
               </th>
@@ -70,7 +72,13 @@ export default function ContestTable() {
           {contests.map((contest) => (
             <tr key={contest.id} className="text-gray-300 hover:bg-gray-800/50">
               <td className="whitespace-nowrap px-4 py-3 text-sm text-blue-400">
-                {contest.name}
+                {isOngoing ? (
+                  <a href={contest.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                    {contest.name}
+                  </a>
+                ) : (
+                  contest.name
+                )}
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-sm">
                 {formatDate(contest.startTime.seconds)}
@@ -81,7 +89,12 @@ export default function ContestTable() {
               <td className="whitespace-nowrap px-4 py-3 text-sm">
                 {formatDuration(contest.startTime.seconds, contest.endTime.seconds)}
               </td>
-              <td className="px-4 py-3 text-sm">{contest.description}</td>
+              
+              <td className="whitespace-nowrap px-4 py-3 text-sm">
+                <Link href={`/ContestList/${contest.id}`} className="text-blue-400 hover:underline">
+                  View Details
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -116,7 +129,7 @@ export default function ContestTable() {
 
         {activeTab === 'upcoming' && (
           upcoming.length > 0 ? (
-            renderContestTable(upcoming)
+            renderContestTable(upcoming, false)
           ) : (
             <div className="p-8 text-center text-gray-400">No upcoming contests at the moment</div>
           )
@@ -124,7 +137,7 @@ export default function ContestTable() {
 
         {activeTab === 'ongoing' && (
           ongoing.length > 0 ? (
-            renderContestTable(ongoing)
+            renderContestTable(ongoing, true)
           ) : (
             <div className="p-8 text-center text-gray-400">No ongoing contests at the moment</div>
           )
@@ -132,7 +145,7 @@ export default function ContestTable() {
 
         {activeTab === 'past' && (
           past.length > 0 ? (
-            renderContestTable(past)
+            renderContestTable(past, false)
           ) : (
             <div className="p-8 text-center text-gray-400">No past contests</div>
           )
