@@ -1,36 +1,26 @@
 "use client";
-import { getContestQuestions } from "./getContests";
+import { getContestData } from "./getContests";
 import { useState, useEffect } from "react";
 import { Card } from "./card";
 import Timer from "./timer";
 import Calculator from "./calculator";
 
 export default function ContestPage() {
-  const [questionList, setQuestionList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  let data = getContestData();
+
+  const [questionList, setQuestionList] = useState(data.questions);
+  const [loading, setLoading] = useState(false);
+  const [doneList, setDoneList] = useState(
+    Array(data.questions.length).fill(false),
+  );
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState("");
-  const [resultMessage, setResultMessage] = useState<{ text: string; isCorrect: boolean; show: boolean } | null>(null);
-
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const questions = await getContestQuestions("TMTqpSqeeIdYmCg4T6N1");
-        setLoading(true);
-        if (Array.isArray(questions) && questions.length > 0) {
-          setQuestionList(questions);
-        } else {
-          console.warn("No questions returned or invalid response:", questions);
-        }
-      } catch (error) {
-        console.error("Error fetching questions:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchQuestions();
-  }, []);
+  const [resultMessage, setResultMessage] = useState<{
+    text: string;
+    isCorrect: boolean;
+    show: boolean;
+  } | null>(null);
 
   const handleNext = () => {
     if (currentQuestionIndex < questionList.length - 1) {
@@ -49,20 +39,22 @@ export default function ContestPage() {
   const handleSubmit = () => {
     const questionId = questionList[currentQuestionIndex]?.id;
 
-    if (!questionId || !answer.trim()) {
+    if (!answer.trim()) {
       alert("Please provide an answer before submitting!");
       return;
     }
     const isCorrect = questionList[currentQuestionIndex].answer == answer;
+    //If is correct
+
     setResultMessage({
       text: isCorrect ? "Correct answer!" : "Wrong answer!",
       isCorrect: isCorrect,
-      show: true
+      show: true,
     });
 
     // Hide the message after 3 seconds
     setTimeout(() => {
-      setResultMessage((prev) => prev ? { ...prev, show: false } : null);
+      setResultMessage((prev) => (prev ? { ...prev, show: false } : null));
       setTimeout(() => setResultMessage(null), 500);
     }, 2500);
   };
@@ -78,7 +70,9 @@ export default function ContestPage() {
   if (questionList.length === 0) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
-        <div className="text-2xl font-bold">No questions available for this contest.</div>
+        <div className="text-2xl font-bold">
+          No questions available for this contest.
+        </div>
       </div>
     );
   }
@@ -93,23 +87,29 @@ export default function ContestPage() {
           >
             <div className="prose prose-invert max-w-none">
               <h2 className="text-2xl font-bold mb-4">
-                {questionList[currentQuestionIndex]?.title || "No title available."}
+                {questionList[currentQuestionIndex]?.qname ||
+                  "No title available."}
               </h2>
               <p className="text-lg mb-4">
-                {questionList[currentQuestionIndex]?.questionDesc ||
+                {questionList[currentQuestionIndex]?.description ||
                   "No description available."}
               </p>
-              <h3 className="text-xl font-semibold mt-4">Example:</h3>
+
               <pre className="bg-gray-800 p-4 rounded-lg text-sm overflow-x-auto">
-                {questionList[currentQuestionIndex]?.example ||
-                  "No example available."}
+                {questionList[currentQuestionIndex].image !== "" ? (
+                  <img
+                    src={questionList[currentQuestionIndex].image}
+                    alt="Question Image"
+                    className="w-full h-auto rounded-lg"
+                  />
+                ) : null}
               </pre>
             </div>
             {resultMessage && (
-              <div 
+              <div
                 className={`absolute bottom-8 left-4 right-4 p-4 text-white text-xl font-semibold rounded-md transition-opacity duration-500 ease-in-out ${
-                  resultMessage.isCorrect ? 'bg-green-500' : 'bg-red-500'
-                } ${resultMessage.show ? 'opacity-100' : 'opacity-0'}`}
+                  resultMessage.isCorrect ? "bg-green-500" : "bg-red-500"
+                } ${resultMessage.show ? "opacity-100" : "opacity-0"}`}
               >
                 {resultMessage.text}
               </div>
@@ -163,4 +163,3 @@ export default function ContestPage() {
     </div>
   );
 }
-
