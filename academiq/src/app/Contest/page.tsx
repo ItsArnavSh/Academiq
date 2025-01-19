@@ -163,14 +163,14 @@ export default function ContestPage() {
       //Add score in the server
       const userCookie = Cookies.get("user");
       const user = JSON.parse(userCookie);
-      updateScore(user.email, data.id, 20);
+      updateScore(user.email, data.id, 200);
       updateStudentScore(db, data.id, user.email, currentQuestionIndex, 20);
     } else {
       //Deduct Score from the server
       const userCookie = Cookies.get("user");
       const user = JSON.parse(userCookie);
       console.log("data: ", data.id, user.email);
-      updateScore(user.email, data.id, -8);
+      updateScore(user.email, data.id, -80);
       updateStudentScore(db, data.id, user.email, currentQuestionIndex, -8);
     }
     // Update doneList correctly using setDoneList
