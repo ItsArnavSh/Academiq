@@ -6,13 +6,15 @@ import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "../firebase/firebase"; // Assume this is set up
 
 type Question = {
+  qname: string;
   description: string;
+  image: string | null;
   answer: string;
+  solution: string | null;
 };
 
 type Contest = {
   name: string;
-  status: "Ongoing" | "Completed" | "Upcoming";
   students: string[];
   description: string;
   startTime: Date;
@@ -24,7 +26,6 @@ export default function AddContestPage() {
   const router = useRouter();
   const [contest, setContest] = useState<Contest>({
     name: "",
-    status: "Upcoming",
     students: [],
     description: "",
     startTime: new Date(),
@@ -32,8 +33,11 @@ export default function AddContestPage() {
     questions: [],
   });
   const [newQuestion, setNewQuestion] = useState<Question>({
+    qname: "",
     description: "",
     answer: "",
+    image: "",
+    solution: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -45,25 +49,24 @@ export default function AddContestPage() {
     setContest((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setContest((prev) => ({
-      ...prev,
-      status: e.target.value as Contest["status"],
-    }));
-  };
-
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setContest((prev) => ({ ...prev, [name]: new Date(value) }));
   };
 
   const handleAddQuestion = () => {
-    if (newQuestion.description && newQuestion.answer) {
+    if (newQuestion.qname && newQuestion.answer) {
       setContest((prev) => ({
         ...prev,
         questions: [...prev.questions, newQuestion],
       }));
-      setNewQuestion({ description: "", answer: "" });
+      setNewQuestion({
+        qname: "",
+        description: "",
+        answer: "",
+        solution: "",
+        image: "",
+      });
     }
   };
 
@@ -90,7 +93,7 @@ export default function AddContestPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push("/contests"); // Assuming there's a contests list page
+        router.push("/ContestList"); // Assuming there's a contests list page
       }, 2000);
     } catch (error) {
       console.error("Error adding contest: ", error);
@@ -119,26 +122,6 @@ export default function AddContestPage() {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-          </div>
-
-          <div>
-            <label
-              htmlFor="status"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Status
-            </label>
-            <select
-              id="status"
-              name="status"
-              value={contest.status}
-              onChange={handleStatusChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="Upcoming">Upcoming</option>
-              <option value="Ongoing">Ongoing</option>
-              <option value="Completed">Completed</option>
-            </select>
           </div>
 
           <div>
@@ -200,16 +183,36 @@ export default function AddContestPage() {
             {contest.questions.map((q, index) => (
               <div key={index} className="mb-2 p-2 bg-gray-100 rounded">
                 <p>
+                  <strong>Name:</strong> {q.qname}
+                </p>
+                <p>
                   <strong>Description:</strong> {q.description}
                 </p>
                 <p>
+                  <strong>Image:</strong> {q.image}
+                </p>
+                <p>
                   <strong>Answer:</strong> {q.answer}
+                </p>
+                <p>
+                  <strong>Video:</strong> {q.solution}
                 </p>
               </div>
             ))}
             <div className="space-y-2">
               <input
                 type="text"
+                placeholder="Question Title*"
+                value={newQuestion.qname}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    qname: e.target.value,
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <textarea
                 placeholder="Question description"
                 value={newQuestion.description}
                 onChange={(e) =>
@@ -222,10 +225,34 @@ export default function AddContestPage() {
               />
               <input
                 type="text"
-                placeholder="Answer"
+                placeholder="Image"
+                value={newQuestion.image}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    image: e.target.value,
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <input
+                type="text"
+                placeholder="Answer*"
                 value={newQuestion.answer}
                 onChange={(e) =>
                   setNewQuestion({ ...newQuestion, answer: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <input
+                type="text"
+                placeholder="Video Solution"
+                value={newQuestion.solution}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    solution: e.target.value,
+                  })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
