@@ -1,238 +1,229 @@
-"use client";
-import { getContestData } from "./getContests";
-import { useState, useEffect } from "react";
-import { Card } from "./card";
-import Timer from "./timer";
-import Calculator from "./calculator";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
-import { db } from "../firebase/firebase";
-import Cookies from "js-cookie";
+"use client"
+import { getContestData } from "./getContests"
+import { useState, useEffect } from "react"
+import { Card } from "./card"
+import Timer from "./timer"
+import Calculator from "./calculator"
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore"
+import { db } from "../firebase/firebase"
+import Cookies from "js-cookie"
+import {getScores} from "./getScores"
 
-async function updateStudentScore(
-  db,
-  contestId,
-  studentEmail,
-  index,
-  modifier,
-) {
+async function updateStudentScore(db, contestId, studentEmail, index, modifier) {
   try {
     // Reference to the specific student document
-    const studentRef = doc(db, `Contests/${contestId}/students`, studentEmail);
+    const studentRef = doc(db, `Contests/${contestId}/students`, studentEmail)
 
     // Get the current document data
-    const studentSnap = await getDoc(studentRef);
+    const studentSnap = await getDoc(studentRef)
 
     if (!studentSnap.exists()) {
-      console.error("Student document not found!");
-      return;
+      console.error("Student document not found!")
+      return
     }
 
     // Get the current scores array
-    const studentData = studentSnap.data();
-    const scores = studentData.scores;
+    const studentData = studentSnap.data()
+    const scores = studentData.scores
+    console.log(scores)
 
     // Update the score at the specified index
     if (index < 0 || index >= scores.length) {
-      console.error("Invalid index!");
-      return;
+      console.error("Invalid index!")
+      return
     }
-    scores[index] += modifier;
+    scores[index] += modifier
 
     // Update the Firestore document with the modified scores array
-    await updateDoc(studentRef, { scores });
+    await updateDoc(studentRef, { scores })
 
-    console.log(
-      `Score updated successfully for ${studentEmail} at index ${index}`,
-    );
+    console.log(`Score updated successfully for ${studentEmail} at index ${index}`)
   } catch (error) {
-    console.error("Error updating student score:", error);
+    console.error("Error updating student score:", error)
   }
 }
 
 async function updateScore(email, docId, change) {
   try {
     // Fetch the user document using email (assuming the email is stored in the user document)
-    const usersCollectionRef = collection(db, "users");
-    const querySnapshot = await getDocs(usersCollectionRef);
+    const usersCollectionRef = collection(db, "users")
+    const querySnapshot = await getDocs(usersCollectionRef)
 
-    let userId = null;
+    let userId = null
 
     // Find the userId based on the email
     querySnapshot.forEach((doc) => {
       if (doc.data().email === email) {
-        userId = doc.id;
+        userId = doc.id
       }
-    });
+    })
 
     if (!userId) {
-      console.log("User not found with the provided email.");
-      return;
+      console.log("User not found with the provided email.")
+      return
     }
 
     // Reference the scores subcollection using the found userId
-    const scoreRef = doc(collection(db, `users/${userId}/scores`), docId);
+    const scoreRef = doc(collection(db, `users/${userId}/scores`), docId)
 
-    const scoreDoc = await getDoc(scoreRef);
+    const scoreDoc = await getDoc(scoreRef)
 
     if (scoreDoc.exists()) {
       // Document exists, update the value
       await updateDoc(scoreRef, {
         value: scoreDoc.data().value + change,
-      });
-      console.log(
-        `Updated score in document ${docId} for user with email ${email}`,
-      );
+      })
+      console.log(`Updated score in document ${docId} for user with email ${email}`)
     } else {
       // Document does not exist, create it
-      await setDoc(scoreRef, { value: change });
-      console.log(
-        `Created document ${docId} with initial value ${change} for user with email ${email}`,
-      );
+      await setDoc(scoreRef, { value: change })
+      console.log(`Created document ${docId} with initial value ${change} for user with email ${email}`)
     }
   } catch (error) {
-    console.error("Error updating/creating score document: ", error);
+    console.error("Error updating/creating score document: ", error)
   }
 }
 export default function ContestPage() {
-  const [data, setData] = useState({ id: String, questions: [] });
+  const [data, setData] = useState({ id: String, questions: [] })
 
-  const [doneList, setDoneList] = useState([]);
-  const [questionList, setQuestionList] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answer, setAnswer] = useState("");
+  const [doneList, setDoneList] = useState([])
+  const [questionList, setQuestionList] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [answer, setAnswer] = useState("")
   const [resultMessage, setResultMessage] = useState<{
-    text: string;
-    isCorrect: boolean;
-    show: boolean;
-  } | null>(null);
+    text: string
+    isCorrect: boolean
+    show: boolean
+  } | null>(null)
+  const [leaderboardData, setLeaderboardData] = useState([])
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
-      const contestData = await getContestData();
-      setData(contestData);
-      setQuestionList(contestData.questions);
-      setDoneList(new Array(contestData.questions.length).fill(false)); // Initialize doneList
-      setLoading(false);
-    };
+      setLoading(true)
+      const contestData = await getContestData()
+      setData(contestData)
+      setQuestionList(contestData.questions)
+      setDoneList(new Array(contestData.questions.length).fill(false)) // Initialize doneList
+      setLoading(false)
+    }
 
-    fetchData();
-  }, []); // Only runs once on mount to fetch data
+    fetchData()
+  }, []) // Only runs once on mount to fetch data
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = ""; // This is required for most browsers to show a confirmation dialog.
-    };
+      event.preventDefault()
+      event.returnValue = "" // This is required for most browsers to show a confirmation dialog.
+    }
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload)
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+    }
+  }, [])
+  useEffect(() => {
+    const fetchScores = async () => {
+      try {
+        const contestData = await getContestData()
+        const ldata = await getScores(contestData.id); // Await the result of getScores
+        setLeaderboardData(ldata); // Set the resolved array to state
+        console.log(ldata);
+      } catch (error) {
+        console.error("Error fetching scores:", error);
+      }
     };
-  }, []);
+
+    fetchScores(); 
+  }, [])
   const handleNext = () => {
     if (currentQuestionIndex < questionList.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-      setAnswer("");
+      setCurrentQuestionIndex((prev) => prev + 1)
+      setAnswer("")
     }
-  };
+  }
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prev) => prev - 1);
-      setAnswer("");
+      setCurrentQuestionIndex((prev) => prev - 1)
+      setAnswer("")
     }
-  };
+  }
 
   const handleSubmit = () => {
     if (!answer.trim()) {
-      alert("Please provide an answer before submitting!");
-      return;
+      alert("Please provide an answer before submitting!")
+      return
     }
 
-    const isCorrect = questionList[currentQuestionIndex].answer == answer;
+    const isCorrect = questionList[currentQuestionIndex].answer == answer
     if (isCorrect) {
       //Add score in the server
-      const userCookie = Cookies.get("user");
-      const user = JSON.parse(userCookie);
-      updateScore(user.email, data.id, 200);
-      updateStudentScore(db, data.id, user.email, currentQuestionIndex, 20);
+      const userCookie = Cookies.get("user")
+      const user = JSON.parse(userCookie)
+      updateScore(user.email, data.id, 200)
+      updateStudentScore(db, data.id, user.email, currentQuestionIndex, 20)
     } else {
       //Deduct Score from the server
-      const userCookie = Cookies.get("user");
-      const user = JSON.parse(userCookie);
-      console.log("data: ", data.id, user.email);
-      updateScore(user.email, data.id, -80);
-      updateStudentScore(db, data.id, user.email, currentQuestionIndex, -8);
+      const userCookie = Cookies.get("user")
+      const user = JSON.parse(userCookie)
+      console.log("data: ", data.id, user.email)
+      updateScore(user.email, data.id, -80)
+      updateStudentScore(db, data.id, user.email, currentQuestionIndex, -8)
     }
     // Update doneList correctly using setDoneList
     setDoneList((prevDoneList) => {
-      const updatedDoneList = [...prevDoneList];
-      if (isCorrect) updatedDoneList[currentQuestionIndex] = true;
-      return updatedDoneList;
-    });
+      const updatedDoneList = [...prevDoneList]
+      if (isCorrect) updatedDoneList[currentQuestionIndex] = true
+      return updatedDoneList
+    })
 
     setResultMessage({
       text: isCorrect ? "Correct answer!" : "Wrong answer!",
       isCorrect: isCorrect,
       show: true,
-    });
+    })
 
     // Hide the message after 3 seconds
     setTimeout(() => {
-      setResultMessage((prev) => (prev ? { ...prev, show: false } : null));
-      setTimeout(() => setResultMessage(null), 500);
-    }, 2500);
-  };
+      setResultMessage((prev) => (prev ? { ...prev, show: false } : null))
+      setTimeout(() => setResultMessage(null), 500)
+    }, 2500)
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
         <div className="text-2xl font-bold">Loading questions...</div>
       </div>
-    );
+    )
   }
 
   if (questionList.length === 0) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
-        <div className="text-2xl font-bold">
-          No questions available for this contest.
-        </div>
+        <div className="text-2xl font-bold">No questions available for this contest.</div>
       </div>
-    );
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-900 p-6 flex flex-col">
       <div className="flex-grow max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <Card
-            title="Question"
-            className="lg:col-span-3 bg-gray-800 text-white shadow-md relative"
-          >
+          <Card title="Question" className="lg:col-span-3 bg-gray-800 text-white shadow-md relative">
             <div className="prose prose-invert max-w-none">
               <h2 className="text-2xl font-bold mb-4">
-                {questionList[currentQuestionIndex]?.qname ||
-                  "No title available."}
+                {questionList[currentQuestionIndex]?.qname || "No title available."}
               </h2>
               <p className="text-lg mb-4">
-                {questionList[currentQuestionIndex]?.description ||
-                  "No description available."}
+                {questionList[currentQuestionIndex]?.description || "No description available."}
               </p>
 
               <pre className="bg-gray-800 p-4 rounded-lg text-sm overflow-x-auto">
                 {questionList[currentQuestionIndex].image !== "" ? (
                   <img
-                    src={questionList[currentQuestionIndex].image}
+                    src={questionList[currentQuestionIndex].image || "/placeholder.svg"}
                     alt="Question Image"
                     className="w-full h-auto rounded-lg"
                   />
@@ -295,6 +286,53 @@ export default function ContestPage() {
           </div>
         </div>
       </div>
+      <Card title="Leaderboard" className="mt-6 bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
+          <h2 className="text-2xl font-bold text-white">Leaderboard</h2>
+        </div>
+        <div className="p-6">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Rank
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  {questionList.map((_, index) => (
+                    <th
+                      key={index}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Q{index + 1}
+                    </th>
+                  ))}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Score
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {leaderboardData.map((user, index) => (
+                  <tr key={index} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
+                    {user.scores.map((score, i) => (
+                      <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {score}
+                      </td>
+                    ))}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{user.totalScore}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </Card>
     </div>
-  );
+  )
 }
+
