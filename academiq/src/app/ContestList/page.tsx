@@ -91,9 +91,16 @@ export default function ContestTable() {
               </td>
               
               <td className="whitespace-nowrap px-4 py-3 text-sm">
-                <Link href={`/ContestList/${contest.id}`} className="text-blue-400 hover:underline">
-                  View Details
-                </Link>
+                {isOngoing ? (
+                   <Link href={`/ContestList/${contest.id}`} className="text-blue-400 hover:underline">
+                   View Details
+                 </Link>
+                ) : (
+                  <div className="text-blue-400">
+                    View Details
+                  </div>
+                )}
+               
               </td>
             </tr>
           ))}
