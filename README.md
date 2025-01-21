@@ -43,8 +43,8 @@ Academiq is a modern, feature-rich platform designed for hosting Olympiad-level 
 
 ### Clone the Repository
 ```bash
-git clone https://github.com/yourusername/academiq.git
-cd academiq
+git clone https://github.com/ItsArnavSh/Academiq.git
+cd Academiq
 ```
 
 ### Install Dependencies
